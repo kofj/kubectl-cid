@@ -1,0 +1,89 @@
+#!/usr/bin/env sh
+set -e
+
+kubectl=kubectl
+version=1.0.0
+pod=""
+container=""
+
+while [ $# -gt 0 ]; do
+    key="$1"
+
+    case $key in
+    -h | --help)
+        echo "Usage: kubectl getcid -n [namespace] -c <container_name> <pod>"
+        exit 0
+        ;;
+    -v | --version)
+        echo "kubectl-cid $version"
+        exit 0
+        ;;
+    --context)
+        nodefaultctx=1
+        kubectl="$kubectl --context $2"
+        shift
+        shift
+        ;;
+    --kubecontext=*)
+        nodefaultctx=1
+        kubectl="$kubectl --context=${key##*=}"
+        shift
+        ;;
+    --kubeconfig)
+        kubectl="$kubectl --kubeconfig $2"
+        shift
+        shift
+        ;;
+    --kubeconfig=*)
+        kubectl="$kubectl --kubeconfig=${key##*=}"
+        shift
+        ;;
+    -n | --namespace)
+        nodefaultns=1
+        kubectl="$kubectl --namespace $2"
+        shift
+        shift
+        ;;
+    -c | --container)
+        container="$2"
+        shift
+        shift
+        ;;
+    --namespace=*)
+        nodefaultns=1
+        kubectl="$kubectl --namespace=${key##*=}"
+        shift
+        ;;
+    --)
+        shift
+        break
+        ;;
+    *)
+        if [ -z "$pod" ]; then
+            pod="${1#pod/}"
+            shift
+        else
+            echo "exactly one pod required"
+            exit 1
+        fi
+        ;;
+    esac
+done
+
+if [ "${#pod}" -eq 0 ]; then
+    echo "pod are required\n"
+    echo "Usage: kubectl getcid -n [namespace] -c <container_name> <pod>"
+    exit 1
+fi
+if [ "${#container}" -eq 0 ]; then
+    echo "arg -c or --container are required\n"
+    echo "Usage: kubectl getcid -n [namespace] -c <container_name> <pod>"
+    exit 1
+fi
+
+container_id=$(kubectl get pod $pod -o jsonpath="{.status.containerStatuses[?(@.name=='$container')].containerID}")
+# echo kubectl get pod $pod -o jsonpath="{.status.containerStatuses[?(@.name=='$container')].containerID}"
+
+container_id=${container_id#*://}
+
+echo "$container_id"
