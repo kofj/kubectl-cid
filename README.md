@@ -5,7 +5,7 @@ A kubectl plugin to show container ID.
 using curl:
 
 ```bash
-curl -LO https://github.com/kofj/kubectl-cid/raw/master/kubectl-cid
+curl -LO https://github.com/kofj/kubectl-cid/raw/main/kubectl-cid
 chmod +x ./kubectl-cid
 sudo mv ./kubectl-cid /usr/local/bin/kubectl-cid
 ```
